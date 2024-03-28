@@ -1,5 +1,4 @@
-Flask==2.1.2
+Flask==2.2.3
+Requests==2.31.0
 opencv-python==4.5.4.58
-requests==2.26.0
-streamlit==1.27.0
 
