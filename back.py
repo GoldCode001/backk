@@ -1,7 +1,7 @@
 from flask import Flask, request, send_file, jsonify
-import cv2
 import os
-import requests
+import yt_dlp
+import cv2
 from requests.exceptions import RequestException
 
 app = Flask(__name__)
@@ -79,15 +79,16 @@ def upload():
 
     return jsonify(error="Invalid file format"), 400
 
-@app.route('/download/<filename>')
-def download(filename):
+@app.route('/download-file/<filename>', methods=['GET'])
+def download_file(filename):
     file_path = os.path.join(app.config['PROCESSED_FOLDER'], filename)
     if os.path.exists(file_path):
         return send_file(file_path, as_attachment=True)
     else:
         return jsonify(error="File not found"), 404
-@app.route('/download', methods=['POST'])
-def download_video():
+
+@app.route('/fetch-video-info', methods=['POST'])
+def fetch_video_info():
     video_url = request.form.get('url')
     if not video_url:
         return jsonify(error="No URL provided"), 400
@@ -98,11 +99,9 @@ def download_video():
             info_dict = ydl.extract_info(video_url, download=False)
             download_url = info_dict.get('url', None)
             title = info_dict.get('title', 'downloaded_video')
-            # Here you can download the video or just pass back the info
             return jsonify({'download_url': download_url, 'title': title})
     except Exception as e:
         return jsonify(error=str(e)), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)
