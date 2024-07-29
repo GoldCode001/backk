@@ -78,15 +78,6 @@ def upload():
         return jsonify({'filename': os.path.basename(output_filename)})
 
     return jsonify(error="Invalid file format"), 400
-
-@app.route('/download-file/<filename>', methods=['GET'])
-def download_file(filename):
-    file_path = os.path.join(app.config['PROCESSED_FOLDER'], filename)
-    if os.path.exists(file_path):
-        return send_file(file_path, as_attachment=True)
-    else:
-        return jsonify(error="File not found"), 404
-
 @app.route('/fetch-video-info', methods=['POST'])
 def fetch_video_info():
     video_url = request.form.get('url')
@@ -102,6 +93,16 @@ def fetch_video_info():
             return jsonify({'download_url': download_url, 'title': title})
     except Exception as e:
         return jsonify(error=str(e)), 500
+
+@app.route('/download-file/<filename>', methods=['GET'])
+def download_file(filename):
+    file_path = os.path.join(app.config['PROCESSED_FOLDER'], filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        return jsonify(error="File not found"), 404
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
