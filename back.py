@@ -86,6 +86,23 @@ def download(filename):
         return send_file(file_path, as_attachment=True)
     else:
         return jsonify(error="File not found"), 404
+@app.route('/download', methods=['POST'])
+def download_video():
+    video_url = request.form.get('url')
+    if not video_url:
+        return jsonify(error="No URL provided"), 400
+
+    try:
+        ydl_opts = {'format': 'best'}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(video_url, download=False)
+            download_url = info_dict.get('url', None)
+            title = info_dict.get('title', 'downloaded_video')
+            # Here you can download the video or just pass back the info
+            return jsonify({'download_url': download_url, 'title': title})
+    except Exception as e:
+        return jsonify(error=str(e)), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
