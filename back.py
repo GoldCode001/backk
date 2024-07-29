@@ -1,9 +1,8 @@
-from flask import Flask, request, send_file, redirect, url_for, jsonify
+from flask import Flask, request, send_file, jsonify
 import cv2
 import os
-import tempfile
 import requests
-from requests.exceptions import ChunkedEncodingError
+from requests.exceptions import RequestException
 
 app = Flask(__name__)
 
@@ -62,31 +61,31 @@ def ensure_directories():
 
 @app.route('/upload', methods=['POST'])
 def upload():
-    # Check if file is uploaded
     if 'file' not in request.files:
-        return redirect(request.url)
+        return jsonify(error="No file uploaded"), 400
 
     file = request.files['file']
 
-    # Check if file is allowed
     if file and allowed_file(file.filename):
-        # Save uploaded file
         filename = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filename)
 
-        # Enhance video resolution
         output_filename, error = enhance_resolution(filename, app.config['PROCESSED_FOLDER'])
 
         if error:
-            return error, 500
+            return jsonify(error=error), 500
 
         return jsonify({'filename': os.path.basename(output_filename)})
 
-    return 'Invalid file format', 400
+    return jsonify(error="Invalid file format"), 400
 
 @app.route('/download/<filename>')
 def download(filename):
-    return send_file(os.path.join(app.config['PROCESSED_FOLDER'], filename), as_attachment=True)
+    file_path = os.path.join(app.config['PROCESSED_FOLDER'], filename)
+    if os.path.exists(file_path):
+        return send_file(file_path, as_attachment=True)
+    else:
+        return jsonify(error="File not found"), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
